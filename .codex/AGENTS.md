@@ -7,12 +7,22 @@ For repo navigation, surface ownership, and PR diff packet guidance, read
 
 ## Model Recommendations
 
-| Task Type | Recommended Model |
-|-----------|------------------|
-| Routine coding, tests, formatting | GPT 5.5 |
-| Complex features, architecture | GPT 5.5 |
-| Debugging, refactoring | GPT 5.5 |
-| Security review | GPT 5.5 |
+This fork routes Codex subagents through [codex-chatgpt-web](https://github.com/miuuyy/codex-chatgpt-web)
+and uses Codex's `[agents].default_subagent_model` plus
+`default_subagent_reasoning_effort` so every role inherits one account-aware default.
+
+| Detected ChatGPT capability | Subagent model | Reasoning |
+|-----------------------------|----------------|-----------|
+| Pro | `chatgpt-web/gpt-6-pro` | `max` |
+| Sol + Extra High | `chatgpt-web/gpt-5.6-sol` | `xhigh` |
+| Plus / Sol (default) | `chatgpt-web/gpt-5.6-sol` | `high` |
+| Luna-only (Free/Go) | `chatgpt-web/gpt-5.6-luna` | `medium` (Think) |
+
+Run `node scripts/codex/configure-chatgpt-web-subagents.js` after
+`codex-chatgpt-web` setup (or use the legacy ECC Codex sync, which runs it
+automatically). The selector reads the launcher's account-capability config and
+falls back to Plus when it is not present. Zero Risk/manual mode is left
+unchanged because autonomous subagents cannot complete its human send-confirmation loop.
 
 ## Skills Discovery
 

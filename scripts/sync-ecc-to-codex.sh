@@ -42,6 +42,7 @@ CODEX_PR_TEMPLATE_DEST="$CODEX_HOME/.github/PULL_REQUEST_TEMPLATE.md"
 PROMPTS_SRC="$REPO_ROOT/commands"
 PROMPTS_DEST="$CODEX_HOME/prompts"
 BASELINE_MERGE_SCRIPT="$REPO_ROOT/scripts/codex/merge-codex-config.js"
+CHATGPT_WEB_SUBAGENT_CONFIGURATOR="$REPO_ROOT/scripts/codex/configure-chatgpt-web-subagents.js"
 HOOKS_INSTALLER="$REPO_ROOT/scripts/codex/install-global-git-hooks.sh"
 SANITY_CHECKER="$REPO_ROOT/scripts/codex/check-codex-global-state.sh"
 LEGACY_STATE_HELPER="$REPO_ROOT/scripts/codex/legacy-sync-state.js"
@@ -168,6 +169,7 @@ require_path "$CODEX_CONTRIBUTING_SRC" "ECC contributing guide"
 require_path "$CODEX_PR_TEMPLATE_SRC" "ECC PR template"
 require_path "$PROMPTS_SRC" "ECC commands directory"
 require_path "$BASELINE_MERGE_SCRIPT" "ECC Codex baseline merge script"
+require_path "$CHATGPT_WEB_SUBAGENT_CONFIGURATOR" "ECC ChatGPT Web subagent configurator"
 require_path "$HOOKS_INSTALLER" "ECC global git hooks installer"
 require_path "$SANITY_CHECKER" "ECC global sanity checker"
 require_path "$LEGACY_STATE_HELPER" "ECC legacy sync state helper"
@@ -308,6 +310,13 @@ if [[ "$MODE" == "dry-run" ]]; then
   node "$BASELINE_MERGE_SCRIPT" "$CONFIG_FILE" --dry-run
 else
   node "$BASELINE_MERGE_SCRIPT" "$CONFIG_FILE"
+fi
+
+log "Configuring Codex subagents from codex-chatgpt-web account capabilities"
+if [[ "$MODE" == "dry-run" ]]; then
+  node "$CHATGPT_WEB_SUBAGENT_CONFIGURATOR" --config "$CONFIG_FILE" --dry-run
+else
+  node "$CHATGPT_WEB_SUBAGENT_CONFIGURATOR" --config "$CONFIG_FILE"
 fi
 
 log "Syncing Codex navigation guide"
