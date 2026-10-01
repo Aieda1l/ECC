@@ -162,7 +162,23 @@ codex plugin list --json
 ```
 
 Continue only when the JSON reports ECC installed and provides its
-`installedPath`. Then render the verified bundle's welcome:
+`installedPath`.
+
+If `codex-chatgpt-web` is installed, configure spawned subagents from the
+authenticated ChatGPT account before rendering the welcome. Use only the exact
+absolute `installedPath` returned by Codex JSON and invoke Node with a separate
+argument array:
+
+```text
+["node", "<installedPath>/scripts/codex/configure-chatgpt-web-subagents.js"]
+```
+
+The selector defaults to Plus (`GPT-5.6 Sol` / High), upgrades to Extra High
+or Pro when the launcher says the account supports them, and uses Luna Think
+for Luna-only accounts. It leaves Zero Risk/manual mode unchanged. A user can
+rerun this helper after changing ChatGPT plans or launcher model availability.
+
+Then render the verified bundle's welcome:
 
 Use only the exact absolute `installedPath` returned by Codex JSON. Reject
 control characters and require the installed version to match
