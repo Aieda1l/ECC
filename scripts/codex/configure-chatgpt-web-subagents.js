@@ -126,7 +126,7 @@ function updateInlineAgents(line, selection) {
 
   for (const [key, value] of entries) {
     const pattern = new RegExp(
-      '(^|,\\s*)(' + key + '\\s*=\\s*)(?:"(?:\\\\.|[^"])*"|\\'[^\\']*\\'|[^,}]+)',
+      "(^|,\\\\s*)(" + key + "\\\\s*=\\\\s*)(?:\"(?:\\\\\\\\.|[^\"])*\"|'[^']*'|[^,}]+)",
     );
     if (pattern.test(body)) {
       body = body.replace(pattern, (_all, prefix, assignment) =>
