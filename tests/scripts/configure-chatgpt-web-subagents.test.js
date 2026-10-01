@@ -110,6 +110,17 @@ function runTests() {
     assert.strictEqual(parsed.agents.reviewer.description, 'review');
   })) passed++; else failed++;
 
+  if (test('updates an inline agents table while preserving nested role config', () => {
+    const source = 'agents = { explorer = { description = "read only" }, max_threads = 6 }\n';
+    const updated = updateCodexConfig(source, DEFAULT_PLUS);
+    const parsed = TOML.parse(updated);
+
+    assert.strictEqual(parsed.agents.default_subagent_model, DEFAULT_PLUS.model);
+    assert.strictEqual(parsed.agents.default_subagent_reasoning_effort, DEFAULT_PLUS.effort);
+    assert.strictEqual(parsed.agents.max_threads, 6);
+    assert.strictEqual(parsed.agents.explorer.description, 'read only');
+  })) passed++; else failed++;
+
   if (test('creates [agents] before an existing role subtable', () => {
     const source = [
       '[agents.reviewer]',
