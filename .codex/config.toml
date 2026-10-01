@@ -106,6 +106,12 @@ web_search = "live"
 [agents]
 # Multi-agent role limits and local role definitions.
 # These map to `.codex/agents/*.toml` and mirror the repo's explorer/reviewer/docs workflow.
+#
+# Default to the strongest universally available Plus route from codex-chatgpt-web.
+# scripts/codex/configure-chatgpt-web-subagents.js rewrites these two values from
+# the authenticated ChatGPT account (Pro, Extra High, Plus, or Luna-only).
+default_subagent_model = "chatgpt-web/gpt-5.6-sol"
+default_subagent_reasoning_effort = "high"
 max_threads = 6
 max_depth = 1
 
