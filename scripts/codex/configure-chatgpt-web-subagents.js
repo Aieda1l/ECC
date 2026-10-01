@@ -125,7 +125,9 @@ function updateInlineAgents(line, selection) {
   ];
 
   for (const [key, value] of entries) {
-    const pattern = new RegExp(\n      String.raw`(^|,\\s*)(${key}\\s*=\\s*)(?:\"(?:\\\\.|[^\"])*\"|'[^']*'|[^,}]+)`,\n    );
+    const pattern = new RegExp(
+      String.raw`(^|,\s*)(${key}\s*=\s*)(?:"(?:\\.|[^"])*"|'[^']*'|[^,}]+)`,
+    );
     if (pattern.test(body)) {
       body = body.replace(pattern, (_all, prefix, assignment) =>
         prefix + assignment + tomlString(value));
