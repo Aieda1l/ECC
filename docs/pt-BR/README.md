@@ -79,6 +79,10 @@ Este repositório contém apenas o código. Os guias explicam tudo.
 
 ## O Que Há de Novo
 
+### v2.2.3 — Perfil pi/core e Confiabilidade de Releases (Out 2026)
+
+O perfil `pi/core` agora se refere ao projeto apenas como ECC, e o workflow de release aguarda até cinco minutos pelo npm antes de verificar o pacote publicado.
+
 ### v2.2.2 — Instalação Guiada para Múltiplos Harnesses (Ago 2026)
 
 Adiciona uma instalação revisável para Claude Code, Codex e Kimi Code, com uma entrada de comando npm sincronizada.
