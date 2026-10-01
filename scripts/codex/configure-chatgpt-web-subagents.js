@@ -13,20 +13,14 @@
  *
  * Zero Risk/manual mode is intentionally left untouched because autonomous
  * subagents cannot complete its human paste/send confirmation loop.
+ *
+ * This file intentionally has no npm runtime dependencies so it also works from
+ * Codex's isolated native-plugin cache.
  */
 
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-
-let TOML;
-try {
-  TOML = require('@iarna/toml');
-} catch {
-  console.error('[ecc-codex-web] Missing dependency: @iarna/toml');
-  console.error('[ecc-codex-web] Run: npm install   (from the ECC repo root)');
-  process.exit(1);
-}
 
 const DEFAULT_PLUS = Object.freeze({
   model: 'chatgpt-web/gpt-5.6-sol',
@@ -52,17 +46,10 @@ function defaultWebConfigPath(env = process.env) {
 
 function selectSubagentDefaults(capabilities) {
   if (!capabilities) return { ...DEFAULT_PLUS };
-
-  if (capabilities.browserInteractionMode === 'manual') {
-    return null;
-  }
+  if (capabilities.browserInteractionMode === 'manual') return null;
 
   if (capabilities.proAvailable === true) {
-    return {
-      model: 'chatgpt-web/gpt-6-pro',
-      effort: 'max',
-      account: 'Pro',
-    };
+    return { model: 'chatgpt-web/gpt-6-pro', effort: 'max', account: 'Pro' };
   }
 
   if (capabilities.solAvailable === false) {
@@ -104,11 +91,8 @@ function readCapabilities(webConfigPath) {
 }
 
 function tomlString(value) {
-  return TOML.stringify({ value }).trim().replace(/^value = /, '');
-}
-
-function serializeAgentsTable(agents) {
-  return TOML.stringify({ agents }).trim();
+  // JSON double-quoted strings are valid TOML basic strings for these ASCII model IDs/efforts.
+  return JSON.stringify(value);
 }
 
 function findTableEnd(lines, startIndex) {
@@ -130,44 +114,62 @@ function replaceOrInsertKey(lines, startIndex, endIndex, key, value) {
   lines.splice(endIndex, 0, key + ' = ' + tomlString(value));
 }
 
-function updateCodexConfig(raw, selection) {
-  let parsed;
-  try {
-    parsed = TOML.parse(raw);
-  } catch (error) {
-    throw new Error('Could not parse Codex config.toml: ' + error.message);
+function updateInlineAgents(line, selection) {
+  const match = line.match(/^(\s*agents\s*=\s*\{)(.*)(\}\s*(?:#.*)?)$/);
+  if (!match) return null;
+
+  let body = match[2].trim();
+  const entries = [
+    ['default_subagent_model', selection.model],
+    ['default_subagent_reasoning_effort', selection.effort],
+  ];
+
+  for (const [key, value] of entries) {
+    const pattern = new RegExp(
+      '(^|,\\s*)(' + key + '\\s*=\\s*)(?:"(?:\\\\.|[^"])*"|\\'[^\\']*\\'|[^,}]+)',
+    );
+    if (pattern.test(body)) {
+      body = body.replace(pattern, (_all, prefix, assignment) =>
+        prefix + assignment + tomlString(value));
+    } else {
+      body += (body ? ', ' : '') + key + ' = ' + tomlString(value);
+    }
   }
 
-  const lines = raw.replace(/\r\n?/g, '\n').split('\n');
+  return match[1] + (body ? ' ' + body + ' ' : '') + match[3];
+}
+
+function updateCodexConfig(raw, selection) {
+  const newline = raw.includes('\r\n') ? '\r\n' : '\n';
+  const normalized = raw.replace(/\r\n?/g, '\n');
+  const lines = normalized.split('\n');
   const agentsHeader = lines.findIndex(line => /^\s*\[agents\]\s*(?:#.*)?$/.test(line));
 
   if (agentsHeader >= 0) {
     let end = findTableEnd(lines, agentsHeader);
     replaceOrInsertKey(lines, agentsHeader, end, 'default_subagent_model', selection.model);
     end = findTableEnd(lines, agentsHeader);
-    replaceOrInsertKey(lines, agentsHeader, end, 'default_subagent_reasoning_effort', selection.effort);
-    const next = lines.join('\n');
-    TOML.parse(next);
-    return next;
+    replaceOrInsertKey(
+      lines,
+      agentsHeader,
+      end,
+      'default_subagent_reasoning_effort',
+      selection.effort,
+    );
+    return lines.join(newline);
   }
 
   const inlineAgents = lines.findIndex(line => /^\s*agents\s*=\s*\{.*\}\s*(?:#.*)?$/.test(line));
   if (inlineAgents >= 0) {
-    const current = parsed.agents && typeof parsed.agents === 'object' && !Array.isArray(parsed.agents)
-      ? parsed.agents
-      : {};
-    const replacement = serializeAgentsTable({
-      ...current,
-      default_subagent_model: selection.model,
-      default_subagent_reasoning_effort: selection.effort,
-    });
-    lines.splice(inlineAgents, 1, ...replacement.split('\n'));
-    const next = lines.join('\n');
-    TOML.parse(next);
-    return next;
+    const updated = updateInlineAgents(lines[inlineAgents], selection);
+    if (!updated) throw new Error('Could not safely update inline agents configuration');
+    lines[inlineAgents] = updated;
+    return lines.join(newline);
   }
 
-  const firstAgentsSubtable = lines.findIndex(line => /^\s*\[agents\.[^\]]+\]\s*(?:#.*)?$/.test(line));
+  const firstAgentsSubtable = lines.findIndex(
+    line => /^\s*\[agents\.[^\]]+\]\s*(?:#.*)?$/.test(line),
+  );
   const block = [
     '[agents]',
     'default_subagent_model = ' + tomlString(selection.model),
@@ -183,17 +185,11 @@ function updateCodexConfig(raw, selection) {
     lines.push(...block);
   }
 
-  const next = lines.join('\n');
-  TOML.parse(next);
-  return next;
+  return lines.join(newline);
 }
 
 function parseArgs(argv) {
-  const result = {
-    configPath: undefined,
-    webConfigPath: undefined,
-    dryRun: false,
-  };
+  const result = { configPath: undefined, webConfigPath: undefined, dryRun: false };
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -291,4 +287,5 @@ module.exports = {
   readCapabilities,
   selectSubagentDefaults,
   updateCodexConfig,
+  updateInlineAgents,
 };
