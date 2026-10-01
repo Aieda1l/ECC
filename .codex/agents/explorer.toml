@@ -1,5 +1,4 @@
-model = "gpt-5.5"
-model_reasoning_effort = "medium"
+# Model and reasoning inherit [agents] defaults configured by ECC/codex-chatgpt-web.
 sandbox_mode = "read-only"
 
 developer_instructions = """
