@@ -22,9 +22,12 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Merge affaan-m/ECC main
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           git remote add upstream https://github.com/affaan-m/ECC.git
@@ -41,4 +44,5 @@ jobs:
           # Preserve fork-only commits. A real conflict fails the workflow instead
           # of force-resetting main or silently discarding custom ECC changes.
           git merge --no-edit upstream/main
+          gh auth setup-git
           git push origin HEAD:main
